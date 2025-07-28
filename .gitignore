@@ -1,0 +1,17 @@
+# Environment variables
+.env
+
+# Python virtual environment
+myenv/
+venv/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# MLflow tracking data
+mlruns/
+
+# Local data
+data/raw_posts.csv
+vectorizer.joblib

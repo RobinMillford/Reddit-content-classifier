@@ -1,0 +1,62 @@
+name: Build, Train, and Deploy Classifier
+
+on:
+  # Triggers the workflow on push events but only for the "main" branch
+  push:
+    branches: [main]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  build-and-train:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    # A sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - name: Check out code
+        uses: actions/checkout@v3
+
+      # Sets up a Python environment for use in actions
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.9"
+
+      # Installs all the Python libraries listed in your requirements.txt file
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      # Runs the data ingestion script
+      - name: Ingest data from Reddit
+        run: python src/ingest_data.py
+        env:
+          # Pass all required secrets to the script as environment variables
+          REDDIT_CLIENT_ID: ${{ secrets.REDDIT_CLIENT_ID }}
+          REDDIT_CLIENT_SECRET: ${{ secrets.REDDIT_CLIENT_SECRET }}
+          REDDIT_USER_AGENT: ${{ secrets.REDDIT_USER_AGENT }}
+          SFW_SUBREDDITS: ${{ secrets.SFW_SUBREDDITS }}
+          NSFW_SUBREDDITS: ${{ secrets.NSFW_SUBREDDITS }}
+          MIXED_CONTENT_SUBREDDITS: ${{ secrets.MIXED_CONTENT_SUBREDDITS }}
+
+      # Runs the model training and experimentation script
+      - name: Train and evaluate models
+        run: python src/train.py
+
+      # Logs in to the GitHub Container Registry
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Builds the Docker image and pushes it to the GitHub Container Registry
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: true
+          tags: ghcr.io/${{ github.repository_owner }}/reddit-classifier:latest

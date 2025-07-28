@@ -15,7 +15,6 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          # UPDATED: Changed from 3.9 to 3.11 to support modern libraries
           python-version: "3.11"
 
       - name: Install dependencies
@@ -24,12 +23,10 @@ jobs:
       - name: Ingest data from Reddit
         run: python src/ingest_data.py
         env:
+          # We only need to pass the API credentials now, as the lists are in the script.
           REDDIT_CLIENT_ID: ${{ secrets.REDDIT_CLIENT_ID }}
           REDDIT_CLIENT_SECRET: ${{ secrets.REDDIT_CLIENT_SECRET }}
           REDDIT_USER_AGENT: ${{ secrets.REDDIT_USER_AGENT }}
-          SFW_SUBREDDITS: ${{ secrets.SFW_SUBREDDITS }}
-          NSFW_SUBREDDITS: ${{ secrets.NSFW_SUBREDDITS }}
-          MIXED_CONTENT_SUBREDDITS: ${{ secrets.MIXED_CONTENT_SUBREDDITS }}
 
       - name: Train and evaluate models
         run: python src/train.py

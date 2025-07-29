@@ -4,6 +4,7 @@ import mlflow
 from mlflow.tracking import MlflowClient
 from joblib import load
 import os
+import pandas as pd
 
 app = FastAPI()
 
@@ -27,21 +28,23 @@ try:
     client = MlflowClient()
     
     # FINAL ROBUST LOGIC: Filter for runs that have the 'model_type' parameter set.
-    # This correctly identifies only the child model runs (individual models + the ensemble).
-    child_runs = mlflow.search_runs(
+    # This correctly identifies only the child model runs and is compatible with all MLflow versions.
+    all_runs = mlflow.search_runs(
         experiment_ids="0", 
         filter_string="params.model_type IS NOT NULL", # This is the key change
         order_by=["metrics.nsfw_f1_score DESC"]
     )
 
-    if child_runs.empty:
+    if all_runs.empty:
         raise Exception("No valid model runs found. Please ensure the training script has run successfully and created MLflow runs with a 'model_type' parameter.")
 
-    # The best run is the first one in the sorted list
-    best_run = child_runs.iloc[0]
+    best_run = all_runs.iloc[0]
     best_run_id = best_run.run_id
     
-    # We need to find the parent run ID from the tags of the best child run
+    # Find the parent run ID from the tags of the best child run
+    if 'tags.mlflow.parentRunId' not in best_run or pd.isna(best_run["tags.mlflow.parentRunId"]):
+         raise Exception(f"Best run {best_run_id} is not a nested run and has no parent.")
+         
     parent_run_id = best_run["tags.mlflow.parentRunId"]
     model_name = best_run["params.model_type"]
 
@@ -58,7 +61,6 @@ try:
     print("   Vectorizer loaded successfully.")
 
     # Load the Champion Model from its run
-    # The model artifact path is now dynamic based on the model name
     model_artifact_path = f"{model_name}-classifier"
     model_uri = f"runs:/{best_run_id}/{model_artifact_path}"
     

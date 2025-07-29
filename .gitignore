@@ -13,6 +13,9 @@ __pycache__/
 data/raw_posts.csv
 vectorizer.joblib
 
+# MLflow tracking data
+mlruns/
+
 # NOTE: The 'mlruns/' directory is INTENTIONALLY NOT ignored.
 # This is because it is a build artifact that needs to be
 # included in the final Docker image for the API to load the model.

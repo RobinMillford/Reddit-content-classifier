@@ -8,9 +8,6 @@ on:
 jobs:
   build-and-train:
     runs-on: ubuntu-latest
-
-    # This permissions block is the crucial fix.
-    # It explicitly grants the workflow the right to write packages.
     permissions:
       contents: read
       packages: write
@@ -48,9 +45,16 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push Docker image
+      - name: Build and push Docker image with unique tag
+        id: docker_build
         uses: docker/build-push-action@v4
         with:
           context: .
           push: true
-          tags: ghcr.io/${{ steps.lower_owner.outputs.OWNER }}/reddit-classifier:latest
+          # Use the Git commit SHA for a unique, reliable tag
+          tags: ghcr.io/${{ steps.lower_owner.outputs.OWNER }}/reddit-classifier:${{ github.sha }}
+
+      # This new step tells Render to pull the new image and deploy it
+      - name: Trigger Render Deploy
+        run: |
+          curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"

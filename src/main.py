@@ -26,11 +26,11 @@ print("--- Initializing Production Model Loader ---")
 try:
     client = MlflowClient()
     
-    # UPDATED LOGIC: Use a filter_string to ONLY search for child runs.
-    # This is more robust and prevents errors if old, non-nested runs exist.
+    # FINAL ROBUST LOGIC: Filter for runs that have the 'model_type' parameter set.
+    # This correctly identifies only the child model runs.
     child_runs = mlflow.search_runs(
         experiment_ids="0", 
-        filter_string="tags.mlflow.parentRunId IS NOT NULL", # This is the key change
+        filter_string="params.model_type IS NOT NULL", # This is the key change
         order_by=["metrics.nsfw_f1_score DESC"]
     )
 
@@ -39,6 +39,7 @@ try:
 
     best_run = child_runs.iloc[0]
     best_run_id = best_run.run_id
+    # We need to find the parent run ID from the tags of the best child run
     parent_run_id = best_run["tags.mlflow.parentRunId"]
     model_name = best_run["params.model_type"]
 

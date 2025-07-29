@@ -9,9 +9,10 @@ venv/
 __pycache__/
 *.pyc
 
-# MLflow tracking data
-mlruns/
-
-# Local data
+# Local data - We KEEP these ignored as they are generated fresh in the pipeline
 data/raw_posts.csv
 vectorizer.joblib
+
+# NOTE: The 'mlruns/' directory is INTENTIONALLY NOT ignored.
+# This is because it is a build artifact that needs to be
+# included in the final Docker image for the API to load the model.

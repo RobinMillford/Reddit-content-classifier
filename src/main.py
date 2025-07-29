@@ -1,10 +1,11 @@
+import pandas as pd
+import mlflow
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-import mlflow
-from mlflow.tracking import MlflowClient
 from joblib import load
 import os
-import pandas as pd
+
+print("--- API SCRIPT VERSION 2.0 ---") # This is our debugging marker
 
 app = FastAPI()
 
@@ -25,23 +26,19 @@ model_name = "None" # Default value
 
 print("--- Initializing Production Model Loader ---")
 try:
-    client = MlflowClient()
-    
     # FINAL ROBUST LOGIC: Filter for runs that have the 'model_type' parameter set.
-    # This correctly identifies only the child model runs and is compatible with all MLflow versions.
     all_runs = mlflow.search_runs(
         experiment_ids="0", 
-        filter_string="params.model_type IS NOT NULL", # This is the key change
+        filter_string="params.model_type IS NOT NULL",
         order_by=["metrics.nsfw_f1_score DESC"]
     )
 
     if all_runs.empty:
-        raise Exception("No valid model runs found. Please ensure the training script has run successfully and created MLflow runs with a 'model_type' parameter.")
+        raise Exception("No valid model runs found in mlruns directory.")
 
     best_run = all_runs.iloc[0]
     best_run_id = best_run.run_id
     
-    # Find the parent run ID from the tags of the best child run
     if 'tags.mlflow.parentRunId' not in best_run or pd.isna(best_run["tags.mlflow.parentRunId"]):
          raise Exception(f"Best run {best_run_id} is not a nested run and has no parent.")
          

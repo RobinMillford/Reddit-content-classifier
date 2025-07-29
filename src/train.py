@@ -47,7 +47,7 @@ with mlflow.start_run(run_name="Model Comparison and Ensemble") as parent_run:
         "LinearSVC": LinearSVC(random_state=42, class_weight='balanced', dual="auto"),
         "MultinomialNB": MultinomialNB(),
         "LightGBM": lgb.LGBMClassifier(random_state=42, scale_pos_weight=scale_pos_weight_value),
-        "MLPClassifier": MLPClassifier(random_state=42, max_iter=5, hidden_layer_sizes=(100, 50), early_stopping=True) # Added DL model
+        "MLPClassifier": MLPClassifier(random_state=42, max_iter=20, hidden_layer_sizes=(100, 50), early_stopping=True) 
     }
 
     trained_models = {}
@@ -75,17 +75,15 @@ with mlflow.start_run(run_name="Model Comparison and Ensemble") as parent_run:
     # --- Create and Evaluate Ensemble Model ---
     print("\n--- Creating and Evaluating Ensemble Model ---")
     
-    # Sort models by F1 score and pick the top two
     top_two_models = sorted(model_scores, key=model_scores.get, reverse=True)[:2]
     print(f"Ensembling the top two models: {top_two_models[0]} and {top_two_models[1]}")
 
-    # Create the ensemble
     ensemble = VotingClassifier(
         estimators=[
             (top_two_models[0], trained_models[top_two_models[0]]),
             (top_two_models[1], trained_models[top_two_models[1]])
         ],
-        voting='hard' # 'hard' uses majority vote, 'soft' uses predicted probabilities (requires predict_proba)
+        voting='hard'
     )
 
     with mlflow.start_run(run_name="VotingClassifier_Ensemble", nested=True) as child_run:
@@ -101,8 +99,9 @@ with mlflow.start_run(run_name="Model Comparison and Ensemble") as parent_run:
         mlflow.log_metric("nsfw_f1_score", report_ensemble['NSFW (1)']['f1-score'])
         mlflow.sklearn.log_model(ensemble, "ensemble-classifier")
 
-    # Save the vectorizer once
+    # --- Save the vectorizer once to the parent run ---
     dump(vectorizer, 'vectorizer.joblib')
-    mlflow.log_artifact("vectorizer.joblib", "vectorizer")
+    # UPDATED: Log the artifact directly without a sub-folder
+    mlflow.log_artifact("vectorizer.joblib")
 
     print("\n✅ All models and ensemble trained and evaluated.")

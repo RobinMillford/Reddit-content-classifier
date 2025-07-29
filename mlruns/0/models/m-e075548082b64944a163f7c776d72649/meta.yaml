@@ -1,0 +1,10 @@
+artifact_location: file:///C:/Users/Yamin%20Hossain/Downloads/reddit-anomaly-detector/mlruns/0/models/m-e075548082b64944a163f7c776d72649/artifacts
+creation_timestamp: 1753721705654
+experiment_id: '0'
+last_updated_timestamp: 1753721708334
+model_id: m-e075548082b64944a163f7c776d72649
+model_type: null
+name: ensemble-classifier
+source_run_id: c2f2bc4ab11b4fa2ad4c54dd86d74f47
+status: 2
+status_message: null

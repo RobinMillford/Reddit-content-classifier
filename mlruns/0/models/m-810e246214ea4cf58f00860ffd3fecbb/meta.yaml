@@ -1,0 +1,10 @@
+artifact_location: file:///C:/Users/Yamin%20Hossain/Downloads/reddit-anomaly-detector/mlruns/0/models/m-810e246214ea4cf58f00860ffd3fecbb/artifacts
+creation_timestamp: 1753721594234
+experiment_id: '0'
+last_updated_timestamp: 1753721599379
+model_id: m-810e246214ea4cf58f00860ffd3fecbb
+model_type: null
+name: LogisticRegression-classifier
+source_run_id: d769ca6f5b994af495a0ddebb3442555
+status: 2
+status_message: null

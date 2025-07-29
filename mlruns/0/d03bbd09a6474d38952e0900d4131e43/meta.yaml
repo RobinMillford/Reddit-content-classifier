@@ -1,0 +1,14 @@
+artifact_uri: file:///C:/Users/Yamin%20Hossain/Downloads/reddit-anomaly-detector/mlruns/0/d03bbd09a6474d38952e0900d4131e43/artifacts
+end_time: 1753715774903
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: d03bbd09a6474d38952e0900d4131e43
+run_name: MultinomialNB
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1753715772778
+status: 3
+tags: []
+user_id: Yamin Hossain

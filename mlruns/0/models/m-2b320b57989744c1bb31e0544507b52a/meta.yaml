@@ -1,0 +1,10 @@
+artifact_location: file:///C:/Users/Yamin%20Hossain/Downloads/reddit-anomaly-detector/mlruns/0/models/m-2b320b57989744c1bb31e0544507b52a/artifacts
+creation_timestamp: 1753721600489
+experiment_id: '0'
+last_updated_timestamp: 1753721602765
+model_id: m-2b320b57989744c1bb31e0544507b52a
+model_type: null
+name: LinearSVC-classifier
+source_run_id: 4e2c89e197554beba53a4720d0984388
+status: 2
+status_message: null

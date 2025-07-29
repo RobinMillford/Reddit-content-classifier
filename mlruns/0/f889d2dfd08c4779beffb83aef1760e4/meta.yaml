@@ -1,0 +1,14 @@
+artifact_uri: file:///C:/Users/Yamin%20Hossain/Downloads/reddit-anomaly-detector/mlruns/0/f889d2dfd08c4779beffb83aef1760e4/artifacts
+end_time: 1753715813769
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: f889d2dfd08c4779beffb83aef1760e4
+run_name: Model Comparison and Ensemble
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1753715763294
+status: 3
+tags: []
+user_id: Yamin Hossain

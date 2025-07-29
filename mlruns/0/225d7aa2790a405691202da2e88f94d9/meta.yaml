@@ -1,0 +1,14 @@
+artifact_uri: file:///C:/Users/Yamin%20Hossain/Downloads/reddit-anomaly-detector/mlruns/0/225d7aa2790a405691202da2e88f94d9/artifacts
+end_time: 1753715770483
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 225d7aa2790a405691202da2e88f94d9
+run_name: LogisticRegression
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1753715767730
+status: 3
+tags: []
+user_id: Yamin Hossain

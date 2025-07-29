@@ -1,0 +1,10 @@
+artifact_location: file:///C:/Users/Yamin%20Hossain/Downloads/reddit-anomaly-detector/mlruns/0/models/m-fd48e3c47e7a44ba8bb8577351a6da8d/artifacts
+creation_timestamp: 1753715779812
+experiment_id: '0'
+last_updated_timestamp: 1753715782135
+model_id: m-fd48e3c47e7a44ba8bb8577351a6da8d
+model_type: null
+name: LightGBM-classifier
+source_run_id: f35e2d6e2b20437eb1ebda620c688b70
+status: 2
+status_message: null

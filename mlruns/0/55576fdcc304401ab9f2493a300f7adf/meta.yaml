@@ -1,0 +1,14 @@
+artifact_uri: file:///C:/Users/Yamin%20Hossain/Downloads/reddit-anomaly-detector/mlruns/0/55576fdcc304401ab9f2493a300f7adf/artifacts
+end_time: 1753721618519
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 55576fdcc304401ab9f2493a300f7adf
+run_name: LightGBM
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1753721605043
+status: 3
+tags: []
+user_id: Yamin Hossain

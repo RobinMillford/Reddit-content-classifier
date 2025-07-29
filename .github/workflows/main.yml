@@ -8,6 +8,13 @@ on:
 jobs:
   build-and-train:
     runs-on: ubuntu-latest
+
+    # This permissions block is the crucial fix.
+    # It explicitly grants the workflow the right to write packages.
+    permissions:
+      contents: read
+      packages: write
+
     steps:
       - name: Check out code
         uses: actions/checkout@v3
@@ -23,7 +30,6 @@ jobs:
       - name: Ingest data from Reddit
         run: python src/ingest_data.py
         env:
-          # We only need to pass the API credentials now, as the lists are in the script.
           REDDIT_CLIENT_ID: ${{ secrets.REDDIT_CLIENT_ID }}
           REDDIT_CLIENT_SECRET: ${{ secrets.REDDIT_CLIENT_SECRET }}
           REDDIT_USER_AGENT: ${{ secrets.REDDIT_USER_AGENT }}
@@ -31,10 +37,8 @@ jobs:
       - name: Train and evaluate models
         run: python src/train.py
 
-      # This new step converts your username "RobinMillford" to "robinmillford"
       - name: Convert owner to lowercase
         id: lower_owner
-        # UPDATED: Using a valid shell command for case conversion
         run: echo "OWNER=$(echo ${{ github.repository_owner }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
 
       - name: Log in to GitHub Container Registry
@@ -49,5 +53,4 @@ jobs:
         with:
           context: .
           push: true
-          # This now uses the corrected lowercase username
           tags: ghcr.io/${{ steps.lower_owner.outputs.OWNER }}/reddit-classifier:latest

@@ -20,18 +20,22 @@ app.add_middleware(
 # --- Dynamic Model Loading from MLflow ---
 model = None
 vectorizer = None
+model_name = "None" # Default value
 
 print("--- Initializing Production Model Loader ---")
 try:
     client = MlflowClient()
     
-    # 1. Find the best performing model run from all experiments
-    # We filter out the parent runs and order by the F1 score to find the champion model.
-    all_runs = mlflow.search_runs(experiment_ids="0", order_by=["metrics.nsfw_f1_score DESC"])
-    child_runs = all_runs[all_runs['tags.mlflow.parentRunId'].notna()] # Filter for nested runs only
+    # UPDATED LOGIC: Use a filter_string to ONLY search for child runs.
+    # This is more robust and prevents errors if old, non-nested runs exist.
+    child_runs = mlflow.search_runs(
+        experiment_ids="0", 
+        filter_string="tags.mlflow.parentRunId IS NOT NULL", # This is the key change
+        order_by=["metrics.nsfw_f1_score DESC"]
+    )
 
     if child_runs.empty:
-        raise Exception("No child model runs found. Please run the training script.")
+        raise Exception("No valid child model runs found. Please ensure the training script has run successfully.")
 
     best_run = child_runs.iloc[0]
     best_run_id = best_run.run_id
@@ -41,7 +45,7 @@ try:
     print(f"✅ Found best model: '{model_name}' from run_id: {best_run_id}")
     print(f"   NSFW F1-Score: {best_run['metrics.nsfw_f1_score']:.4f}")
 
-    # 2. Load the Vectorizer from the Parent Run
+    # Load the Vectorizer from the Parent Run
     print(f"   Loading vectorizer from parent run: {parent_run_id}")
     vectorizer_path_local = mlflow.artifacts.download_artifacts(
         run_id=parent_run_id, 
@@ -50,8 +54,7 @@ try:
     vectorizer = load(vectorizer_path_local)
     print("   Vectorizer loaded successfully.")
 
-    # 3. Load the Champion Model from its run
-    # The model artifact path is now dynamic based on the model name
+    # Load the Champion Model from its run
     model_artifact_path = f"{model_name}-classifier"
     model_uri = f"runs:/{best_run_id}/{model_artifact_path}"
     
@@ -74,20 +77,15 @@ def predict(data: dict):
         return {"error": "Input text cannot be empty."}
     
     try:
-        # Transform the input text using the loaded vectorizer
         vectorized_text = vectorizer.transform([text])
-        
-        # Make a prediction with the champion model
         prediction = model.predict(vectorized_text)
-        
-        # The model outputs 1 for NSFW and 0 for SFW.
         classification = "NSFW" if prediction[0] == 1 else "SFW"
         is_anomaly = bool(classification == "NSFW")
 
         return {
             "input_text": text, 
             "classification": classification,
-            "is_anomaly": is_anomaly # Kept for frontend compatibility
+            "is_anomaly": is_anomaly 
         }
     except Exception as e:
         print(f"Prediction error: {e}")
@@ -100,5 +98,5 @@ def read_root():
     return {
         "message": "NSFW Content Classification API",
         "status": status,
-        "loaded_model": model_name if model else "None"
+        "loaded_model": model_name
     }

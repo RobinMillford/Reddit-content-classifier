@@ -1,4 +1,4 @@
-name: Build, Train, and Deploy Classifier
+name: Deploy to Hugging Face Space
 
 on:
   push:
@@ -6,51 +6,20 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-and-train:
+  deploy-to-hub:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-
     steps:
+      # Step 1: Check out your GitHub repository's code
       - name: Check out code
         uses: actions/checkout@v3
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
         with:
-          python-version: "3.11"
+          fetch-depth: 0
 
-      - name: Install dependencies
-        run: pip install -r requirements.txt
-
-      - name: Ingest data from Reddit
-        run: python src/ingest_data.py
+      # Step 2: Push the code directly to your Hugging Face Space repository
+      - name: Push to Hugging Face Space
         env:
-          REDDIT_CLIENT_ID: ${{ secrets.REDDIT_CLIENT_ID }}
-          REDDIT_CLIENT_SECRET: ${{ secrets.REDDIT_CLIENT_SECRET }}
-          REDDIT_USER_AGENT: ${{ secrets.REDDIT_USER_AGENT }}
-
-      - name: Train and evaluate models
-        run: python src/train.py
-
-      - name: Convert owner to lowercase
-        id: lower_owner
-        run: echo "OWNER=$(echo ${{ github.repository_owner }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
-
-      # --- UPDATED LOGIN STEP ---
-      # Using the new _V2 secrets to bypass any potential caching issues.
-      - name: Log in to Hugging Face Docker Registry
-        uses: docker/login-action@v3
-        with:
-          registry: hf.co
-          username: ${{ secrets.HF_USERNAME_V2 }}
-          password: ${{ secrets.HF_TOKEN_V2 }}
-
-      - name: Build and push Docker image to Hugging Face
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          push: true
-          # The tag format for Hugging Face Spaces is hf.co/spaces/USERNAME/SPACENAME
-          tags: hf.co/spaces/${{ secrets.HF_USERNAME_V2 }}/reddit-content-classifier:latest
+          # Your HF token with WRITE permissions. Ensure this is correct in your repo secrets.
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          # The URL format is https://<YOUR-HF-USERNAME>:<YOUR-HF-TOKEN>@huggingface.co/spaces/<YOUR-HF-USERNAME>/<YOUR-SPACE-NAME>
+          git push --force "https://RobinMillford:${HF_TOKEN}@huggingface.co/spaces/RobinMillford/reddit-content-classifier" main

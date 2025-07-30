@@ -11,7 +11,7 @@ __pycache__/
 
 # Local data - We KEEP these ignored as they are generated fresh in the pipeline
 data/raw_posts.csv
-vectorizer.joblib
+# vectorizer.joblib
 
 # MLflow tracking data
 mlruns/

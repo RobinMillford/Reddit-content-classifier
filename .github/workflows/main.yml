@@ -1,4 +1,4 @@
-name: Deploy to Hugging Face Space
+name: Build and Push Production Docker Image
 
 on:
   push:
@@ -6,61 +6,48 @@ on:
   workflow_dispatch:
 
 jobs:
-  deploy-to-hub:
+  build-and-push:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
     steps:
-      # Step 1: Check out your repository's code
       - name: Check out code
         uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
 
-      # Step 2: Set up Python and install dependencies
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: "3.11"
+
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      # Step 3: Run your MLOps pipeline to generate data and models
       - name: Ingest data from Reddit
         run: python src/ingest_data.py
         env:
           REDDIT_CLIENT_ID: ${{ secrets.REDDIT_CLIENT_ID }}
           REDDIT_CLIENT_SECRET: ${{ secrets.REDDIT_CLIENT_SECRET }}
           REDDIT_USER_AGENT: ${{ secrets.REDDIT_USER_AGENT }}
+
       - name: Train and evaluate models
         run: python src/train.py
 
-      # Step 4: Push the code AND the large model files to your Hugging Face Space
-      - name: Push to Hugging Face Space
-        env:
-          HF_TOKEN: ${{ secrets.HF_TOKEN }}
-        run: |
-          # Configure git with a user identity
-          git config --global user.email "github-actions@github.com"
-          git config --global user.name "GitHub Actions"
+      - name: Convert owner to lowercase
+        id: lower_owner
+        run: echo "OWNER=$(echo ${{ github.repository_owner }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
 
-          # --- THIS IS THE KEY FIX ---
-          # 1. Install Git LFS in the runner environment
-          git lfs install
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-          # 2. Explicitly tell Git LFS to track the large file types.
-          #    This ensures it recognizes the newly generated model files.
-          git lfs track "*.pkl"
-          git lfs track "*.joblib"
-
-          # 3. Forcefully add all new files, including the LFS pointers and the .gitattributes file.
-          git add .gitattributes
-          git add --force mlruns/
-
-          # 4. Create a commit for the new model artifacts.
-          #    The `|| exit 0` part prevents the workflow from failing if there are no changes.
-          git commit -m "MLOps Pipeline: Add latest trained models and data" || exit 0
-
-          # 5. Add the Hugging Face Space as a new remote destination
-          git remote add space https://RobinMillford:${HF_TOKEN}@huggingface.co/spaces/RobinMillford/reddit-content-classifier
-
-          # 6. Push everything, including the LFS files, to the main branch of your Space
-          git push --force space main
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ghcr.io/${{ steps.lower_owner.outputs.OWNER }}/reddit-classifier:latest

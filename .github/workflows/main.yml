@@ -9,13 +9,11 @@ jobs:
   deploy-to-hub:
     runs-on: ubuntu-latest
     steps:
-      # Step 1: Check out your GitHub repository's code
+      # Step 1: Check out your repository's code
       - name: Check out code
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
-          # We need to fetch LFS files as well
-          lfs: true
 
       # Step 2: Set up Python and install dependencies
       - name: Set up Python
@@ -38,28 +36,31 @@ jobs:
       # Step 4: Push the code AND the large model files to your Hugging Face Space
       - name: Push to Hugging Face Space
         env:
-          # Your HF token with WRITE permissions
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
-          # Configure git with your identity
-          git config --global user.email "actions@github.com"
+          # Configure git with a user identity
+          git config --global user.email "github-actions@github.com"
           git config --global user.name "GitHub Actions"
 
-          # Add the Hugging Face Space as a new remote destination
-          git remote add space https://RobinMillford:${HF_TOKEN}@huggingface.co/spaces/RobinMillford/reddit-content-classifier
+          # --- THIS IS THE KEY FIX ---
+          # 1. Install Git LFS in the runner environment
+          git lfs install
 
-          # *** THIS IS THE KEY FIX ***
-          # Use --force to add the 'mlruns' directory, overriding the .gitignore
+          # 2. Explicitly tell Git LFS to track the large file types.
+          #    This ensures it recognizes the newly generated model files.
+          git lfs track "*.pkl"
+          git lfs track "*.joblib"
+
+          # 3. Forcefully add all new files, including the LFS pointers and the .gitattributes file.
+          git add .gitattributes
           git add --force mlruns/
 
-          # Check if there are any changes to commit. If not, the workflow can continue.
-          # This prevents an error if the model training produces the exact same files as before.
-          if [[ -z $(git status -s) ]]; then
-            echo "No new model artifacts to commit. Pushing latest code."
-          else
-            # Create a commit for the new model artifacts
-            git commit -m "MLOps Pipeline: Add latest trained models"
-          fi
+          # 4. Create a commit for the new model artifacts.
+          #    The `|| exit 0` part prevents the workflow from failing if there are no changes.
+          git commit -m "MLOps Pipeline: Add latest trained models and data" || exit 0
 
-          # Push everything, including the LFS files, to the main branch of your Space
+          # 5. Add the Hugging Face Space as a new remote destination
+          git remote add space https://RobinMillford:${HF_TOKEN}@huggingface.co/spaces/RobinMillford/reddit-content-classifier
+
+          # 6. Push everything, including the LFS files, to the main branch of your Space
           git push --force space main

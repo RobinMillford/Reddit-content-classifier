@@ -72,7 +72,6 @@ with mlflow.start_run(run_name="Model Comparison and Ensemble") as parent_run:
             nsfw_f1 = report['NSFW (1)']['f1-score']
             mlflow.log_metric("nsfw_f1_score", nsfw_f1)
             
-            # *** KEY CHANGE: Log the wrapped model and vectorizer together ***
             wrapped_model = ClassifierWrapper(model=model, vectorizer=vectorizer)
             mlflow.pyfunc.log_model(artifact_path=f"{model_name}-classifier", python_model=wrapped_model)
             

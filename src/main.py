@@ -22,6 +22,7 @@ model_name = "None" # Default value
 print("--- Initializing Production Model Loader ---")
 try:
     # FINAL ROBUST LOGIC: Using the most compatible filter string.
+    # This correctly identifies only the child model runs.
     all_runs = mlflow.search_runs(
         experiment_ids="0", 
         filter_string="params.model_type != ''", # This is the correct, compatible filter

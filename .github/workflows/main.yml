@@ -14,12 +14,45 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
+          # We need to fetch LFS files as well
+          lfs: true
 
-      # Step 2: Push the code directly to your Hugging Face Space repository
+      # Step 2: Set up Python and install dependencies
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      # Step 3: Run your MLOps pipeline to generate data and models
+      - name: Ingest data from Reddit
+        run: python src/ingest_data.py
+        env:
+          REDDIT_CLIENT_ID: ${{ secrets.REDDIT_CLIENT_ID }}
+          REDDIT_CLIENT_SECRET: ${{ secrets.REDDIT_CLIENT_SECRET }}
+          REDDIT_USER_AGENT: ${{ secrets.REDDIT_USER_AGENT }}
+      - name: Train and evaluate models
+        run: python src/train.py
+
+      # Step 4: Push the code AND the large model files to your Hugging Face Space
       - name: Push to Hugging Face Space
         env:
-          # Your HF token with WRITE permissions. Ensure this is correct in your repo secrets.
+          # Your HF token with WRITE permissions
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
-          # The URL format is https://<YOUR-HF-USERNAME>:<YOUR-HF-TOKEN>@huggingface.co/spaces/<YOUR-HF-USERNAME>/<YOUR-SPACE-NAME>
-          git push --force "https://RobinMillford:${HF_TOKEN}@huggingface.co/spaces/RobinMillford/reddit-content-classifier" main
+          # Configure git with your identity
+          git config --global user.email "actions@github.com"
+          git config --global user.name "GitHub Actions"
+
+          # Add the Hugging Face Space as a new remote destination
+          git remote add space https://RobinMillford:${HF_TOKEN}@huggingface.co/spaces/RobinMillford/reddit-content-classifier
+
+          # Add all newly generated files (like the mlruns folder) to be committed
+          git add .
+
+          # Create a commit for the new model artifacts
+          git commit -m "MLOps Pipeline: Add latest trained models and data"
+
+          # Push everything, including the LFS files, to the main branch of your Space
+          git push --force space main

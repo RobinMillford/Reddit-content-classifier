@@ -48,11 +48,18 @@ jobs:
           # Add the Hugging Face Space as a new remote destination
           git remote add space https://RobinMillford:${HF_TOKEN}@huggingface.co/spaces/RobinMillford/reddit-content-classifier
 
-          # Add all newly generated files (like the mlruns folder) to be committed
-          git add .
+          # *** THIS IS THE KEY FIX ***
+          # Use --force to add the 'mlruns' directory, overriding the .gitignore
+          git add --force mlruns/
 
-          # Create a commit for the new model artifacts
-          git commit -m "MLOps Pipeline: Add latest trained models and data"
+          # Check if there are any changes to commit. If not, the workflow can continue.
+          # This prevents an error if the model training produces the exact same files as before.
+          if [[ -z $(git status -s) ]]; then
+            echo "No new model artifacts to commit. Pushing latest code."
+          else
+            # Create a commit for the new model artifacts
+            git commit -m "MLOps Pipeline: Add latest trained models"
+          fi
 
           # Push everything, including the LFS files, to the main branch of your Space
           git push --force space main

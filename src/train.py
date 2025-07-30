@@ -10,8 +10,8 @@ from joblib import dump
 from sklearn.linear_model import LogisticRegression
 from sklearn.svm import LinearSVC
 from sklearn.naive_bayes import MultinomialNB
-from sklearn.neural_network import MLPClassifier # Import the DL model
-from sklearn.ensemble import VotingClassifier # Import the ensembler
+from sklearn.neural_network import MLPClassifier
+from sklearn.ensemble import VotingClassifier
 import lightgbm as lgb
 
 # Start a parent MLflow run to group our experiments
@@ -47,7 +47,7 @@ with mlflow.start_run(run_name="Model Comparison and Ensemble") as parent_run:
         "LinearSVC": LinearSVC(random_state=42, class_weight='balanced', dual="auto"),
         "MultinomialNB": MultinomialNB(),
         "LightGBM": lgb.LGBMClassifier(random_state=42, scale_pos_weight=scale_pos_weight_value),
-        "MLPClassifier": MLPClassifier(random_state=42, max_iter=20, hidden_layer_sizes=(100, 50), early_stopping=True) 
+        "MLPClassifier": MLPClassifier(random_state=42, max_iter=20, hidden_layer_sizes=(100, 50), early_stopping=True)
     }
 
     trained_models = {}
@@ -99,9 +99,9 @@ with mlflow.start_run(run_name="Model Comparison and Ensemble") as parent_run:
         mlflow.log_metric("nsfw_f1_score", report_ensemble['NSFW (1)']['f1-score'])
         mlflow.sklearn.log_model(ensemble, "ensemble-classifier")
 
-    # --- Save the vectorizer once to the parent run ---
+    # Save the vectorizer once
     dump(vectorizer, 'vectorizer.joblib')
-    # UPDATED: Log the artifact directly without a sub-folder
+    # *** THIS IS THE FIX: Log the artifact directly without a sub-folder ***
     mlflow.log_artifact("vectorizer.joblib")
 
     print("\n✅ All models and ensemble trained and evaluated.")

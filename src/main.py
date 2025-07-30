@@ -23,20 +23,20 @@ model = None
 vectorizer = None
 model_name = "None" # Default value
 
-print("--- Initializing Production Model Loader ---")
+print("--- API SCRIPT v3.0: Initializing Production Model Loader ---")
 try:
     client = MlflowClient()
     
-    # FINAL ROBUST LOGIC: Using a filter string that is compatible with older MLflow versions.
-    # This checks for runs where the 'model_type' parameter exists.
+    # FINAL ROBUST LOGIC: Filter for runs that have the 'model_type' parameter set.
+    # This correctly identifies only the child model runs and is compatible with all MLflow versions.
     all_runs = mlflow.search_runs(
         experiment_ids="0", 
-        filter_string="params.model_type != ''", # This is the key compatibility fix
+        filter_string="params.model_type != ''", # Using the most compatible filter
         order_by=["metrics.nsfw_f1_score DESC"]
     )
 
     if all_runs.empty:
-        raise Exception("No valid model runs found. Please ensure the training script has run successfully and created MLflow runs with a 'model_type' parameter.")
+        raise Exception("No valid model runs found in mlruns directory. Please ensure the training script has run successfully.")
 
     best_run = all_runs.iloc[0]
     best_run_id = best_run.run_id

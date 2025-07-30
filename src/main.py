@@ -1,9 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import mlflow
-from mlflow.tracking import MlflowClient
-from joblib import load
-import os
 import pandas as pd
 
 app = FastAPI()
@@ -20,50 +17,32 @@ app.add_middleware(
 
 # --- Dynamic Model Loading from MLflow ---
 model = None
-vectorizer = None
 model_name = "None" # Default value
 
-print("--- API SCRIPT v3.0: Initializing Production Model Loader ---")
+print("--- Initializing Production Model Loader ---")
 try:
-    client = MlflowClient()
-    
-    # FINAL ROBUST LOGIC: Filter for runs that have the 'model_type' parameter set.
-    # This correctly identifies only the child model runs and is compatible with all MLflow versions.
+    # FINAL ROBUST LOGIC: Using the most compatible filter string.
     all_runs = mlflow.search_runs(
         experiment_ids="0", 
-        filter_string="params.model_type != ''", # Using the most compatible filter
+        filter_string="params.model_type != ''", # This is the correct, compatible filter
         order_by=["metrics.nsfw_f1_score DESC"]
     )
 
     if all_runs.empty:
-        raise Exception("No valid model runs found in mlruns directory. Please ensure the training script has run successfully.")
+        raise Exception("No valid model runs found. Please ensure the training script has run successfully.")
 
     best_run = all_runs.iloc[0]
     best_run_id = best_run.run_id
-    
-    if 'tags.mlflow.parentRunId' not in best_run or pd.isna(best_run["tags.mlflow.parentRunId"]):
-         raise Exception(f"Best run {best_run_id} is not a nested run and has no parent.")
-         
-    parent_run_id = best_run["tags.mlflow.parentRunId"]
     model_name = best_run["params.model_type"]
 
     print(f"✅ Found best model: '{model_name}' from run_id: {best_run_id}")
     print(f"   NSFW F1-Score: {best_run['metrics.nsfw_f1_score']:.4f}")
 
-    # Load the Vectorizer from the Parent Run
-    print(f"   Loading vectorizer from parent run: {parent_run_id}")
-    vectorizer_path_local = mlflow.artifacts.download_artifacts(
-        run_id=parent_run_id, 
-        artifact_path="vectorizer.joblib"
-    )
-    vectorizer = load(vectorizer_path_local)
-    print("   Vectorizer loaded successfully.")
-
-    # Load the Champion Model from its run
+    # Load the Champion Model. The vectorizer is now packaged inside it.
     model_artifact_path = f"{model_name}-classifier"
     model_uri = f"runs:/{best_run_id}/{model_artifact_path}"
     
-    print(f"   Loading model from URI: {model_uri}")
+    print(f"   Loading model and vectorizer from URI: {model_uri}")
     model = mlflow.pyfunc.load_model(model_uri)
     print("✅ Champion model loaded and ready to serve.")
 
@@ -74,7 +53,7 @@ except Exception as e:
 # --- Define Prediction Endpoint ---
 @app.post("/predict")
 def predict(data: dict):
-    if not model or not vectorizer:
+    if not model:
         return {"error": "Model is not loaded. Please check the backend server logs for errors."}
     
     text = data.get("text", "")
@@ -82,8 +61,10 @@ def predict(data: dict):
         return {"error": "Input text cannot be empty."}
     
     try:
-        vectorized_text = vectorizer.transform([text])
-        prediction = model.predict(vectorized_text)
+        # The input must be a pandas DataFrame for the custom model wrapper
+        input_df = pd.DataFrame([text])
+        prediction = model.predict(input_df)
+        
         classification = "NSFW" if prediction[0] == 1 else "SFW"
         is_anomaly = bool(classification == "NSFW")
 
@@ -99,7 +80,7 @@ def predict(data: dict):
 
 @app.get("/")
 def read_root():
-    status = "Ready" if model and vectorizer else "Error during startup"
+    status = "Ready" if model else "Error during startup"
     return {
         "message": "NSFW Content Classification API",
         "status": status,

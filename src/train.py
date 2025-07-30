@@ -1,6 +1,6 @@
 import pandas as pd
 import mlflow
-import mlflow.sklearn
+import mlflow.pyfunc
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report
@@ -14,32 +14,37 @@ from sklearn.neural_network import MLPClassifier
 from sklearn.ensemble import VotingClassifier
 import lightgbm as lgb
 
+# --- Custom Model Wrapper ---
+# This class will package our vectorizer and model together into a single, robust artifact.
+class ClassifierWrapper(mlflow.pyfunc.PythonModel):
+    def __init__(self, model, vectorizer):
+        self.model = model
+        self.vectorizer = vectorizer
+
+    def predict(self, context, model_input):
+        # The input from the API will be a pandas DataFrame.
+        # We extract the first column, which contains the text.
+        text_data = model_input.iloc[:, 0].tolist()
+        vectorized_text = self.vectorizer.transform(text_data)
+        return self.model.predict(vectorized_text)
+
 # Start a parent MLflow run to group our experiments
 with mlflow.start_run(run_name="Model Comparison and Ensemble") as parent_run:
     mlflow.log_param("parent_run", True)
     
-    # --- Load and Prepare Data (Done once) ---
     df = pd.read_csv("data/raw_posts.csv")
     df['text'] = df['title'] + ' ' + df['body'].fillna('')
-
-    # --- Create Accurate Ground Truth Labels ---
-    if 'classification' not in df.columns:
-        raise ValueError("The 'classification' column is missing from raw_posts.csv. Please run the latest ingest_data.py script.")
-    
     df['label'] = df['classification'].apply(lambda label: 1 if label == 'NSFW' else 0)
     
-    # --- Preprocessing & Feature Engineering ---
     vectorizer = TfidfVectorizer(max_features=5000, stop_words='english', ngram_range=(1, 2)) 
     X = vectorizer.fit_transform(df['text'])
     y = df['label']
 
-    # --- Split Data into Training and Testing Sets ---
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1, random_state=42, stratify=y)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
     
     print(f"Data split: {X_train.shape[0]} training samples, {X_test.shape[0]} testing samples.")
     print(f"NSFW posts in test set: {sum(y_test == 1)}\n")
 
-    # --- Define Models to Test ---
     scale_pos_weight_value = y_train.value_counts()[0] / y_train.value_counts()[1]
 
     models = {
@@ -53,7 +58,6 @@ with mlflow.start_run(run_name="Model Comparison and Ensemble") as parent_run:
     trained_models = {}
     model_scores = {}
 
-    # --- Loop Through Individual Models ---
     for model_name, model in models.items():
         with mlflow.start_run(run_name=model_name, nested=True) as child_run:
             print(f"--- Training and Evaluating: {model_name} ---")
@@ -67,12 +71,14 @@ with mlflow.start_run(run_name="Model Comparison and Ensemble") as parent_run:
             mlflow.log_param("model_type", model_name)
             nsfw_f1 = report['NSFW (1)']['f1-score']
             mlflow.log_metric("nsfw_f1_score", nsfw_f1)
-            mlflow.sklearn.log_model(model, f"{model_name}-classifier")
+            
+            # *** KEY CHANGE: Log the wrapped model and vectorizer together ***
+            wrapped_model = ClassifierWrapper(model=model, vectorizer=vectorizer)
+            mlflow.pyfunc.log_model(artifact_path=f"{model_name}-classifier", python_model=wrapped_model)
             
             trained_models[model_name] = model
             model_scores[model_name] = nsfw_f1
 
-    # --- Create and Evaluate Ensemble Model ---
     print("\n--- Creating and Evaluating Ensemble Model ---")
     
     top_two_models = sorted(model_scores, key=model_scores.get, reverse=True)[:2]
@@ -97,11 +103,9 @@ with mlflow.start_run(run_name="Model Comparison and Ensemble") as parent_run:
         mlflow.log_param("model_type", "VotingClassifier")
         mlflow.log_param("ensembled_models", top_two_models)
         mlflow.log_metric("nsfw_f1_score", report_ensemble['NSFW (1)']['f1-score'])
-        mlflow.sklearn.log_model(ensemble, "ensemble-classifier")
-
-    # Save the vectorizer once
-    dump(vectorizer, 'vectorizer.joblib')
-    # *** THIS IS THE FIX: Log the artifact directly without a sub-folder ***
-    mlflow.log_artifact("vectorizer.joblib")
+        
+        # *** KEY CHANGE: Log the wrapped ensemble and vectorizer together ***
+        wrapped_ensemble = ClassifierWrapper(model=ensemble, vectorizer=vectorizer)
+        mlflow.pyfunc.log_model(artifact_path="VotingClassifier-classifier", python_model=wrapped_ensemble)
 
     print("\n✅ All models and ensemble trained and evaluated.")

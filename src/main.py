@@ -4,11 +4,20 @@ import mlflow
 import pandas as pd
 import os
 
-# --- Configure MLflow to use Cloudflare R2 as a remote artifact store ---
+# --- Configure MLflow to use Cloudflare R2 as a remote store ---
 # These environment variables will be provided by Render's secret management.
 os.environ["MLFLOW_S3_ENDPOINT_URL"] = os.getenv("MLFLOW_S3_ENDPOINT_URL")
 os.environ["AWS_ACCESS_KEY_ID"] = os.getenv("AWS_ACCESS_KEY_ID")
 os.environ["AWS_SECRET_ACCESS_KEY"] = os.getenv("AWS_SECRET_ACCESS_KEY")
+
+BUCKET_NAME = os.getenv("BUCKET_NAME")
+if not BUCKET_NAME:
+    # Set a default for local testing if the env var isn't present
+    print("WARNING: BUCKET_NAME environment variable not set.")
+else:
+    # *** THIS IS THE CRUCIAL FIX ***
+    # We tell MLflow to use the R2 bucket as its backend for finding experiments and models.
+    mlflow.set_tracking_uri(f"s3://{BUCKET_NAME}")
 
 app = FastAPI()
 
@@ -32,7 +41,6 @@ try:
     # Find the best performing model from all runs in our experiment
     all_runs = mlflow.search_runs(
         experiment_names=["RedditContentClassifier"], 
-        filter_string="params.model_type IS NOT NULL",
         order_by=["metrics.nsfw_f1_score DESC"],
         max_results=1
     )

@@ -25,7 +25,7 @@ class ClassifierWrapper(mlflow.pyfunc.PythonModel):
         vectorized_text = self.vectorizer.transform(text_data)
         return self.model.predict(vectorized_text)
 
-# --- Configure MLflow for Hybrid Storage ---
+# --- Configure MLflow to use Cloudflare R2 as a remote store ---
 # These environment variables will be provided by GitHub Actions secrets.
 os.environ["MLFLOW_S3_ENDPOINT_URL"] = os.getenv("MLFLOW_S3_ENDPOINT_URL")
 os.environ["AWS_ACCESS_KEY_ID"] = os.getenv("AWS_ACCESS_KEY_ID")
@@ -36,14 +36,13 @@ if not BUCKET_NAME:
     raise ValueError("BUCKET_NAME environment variable not set.")
 
 # *** THIS IS THE CRUCIAL FIX ***
-# 1. The tracking URI points to the local filesystem to store metadata (run info, params, metrics).
-mlflow.set_tracking_uri("file:./mlruns")
-# 2. The artifact_location for the experiment points to the remote R2 bucket for large files (models).
-ARTIFACT_LOCATION = f"s3://{BUCKET_NAME}"
-EXPERIMENT_NAME = "RedditContentClassifier"
+# We tell MLflow to use the R2 bucket as its backend for storing all metadata and artifacts.
+mlflow.set_tracking_uri(f"s3://{BUCKET_NAME}")
 
-print(f"MLflow configured to use remote artifact store: {ARTIFACT_LOCATION}")
+EXPERIMENT_NAME = "RedditContentClassifier"
 mlflow.set_experiment(EXPERIMENT_NAME)
+
+print(f"MLflow configured to use remote tracking URI: s3://{BUCKET_NAME}")
 
 # --- Main Training Logic ---
 df = pd.read_csv("data/raw_posts.csv")
@@ -72,14 +71,7 @@ models = {
 trained_models = {}
 model_scores = {}
 
-# Create a new experiment that will store artifacts in our R2 bucket
-try:
-    experiment_id = mlflow.create_experiment(name=EXPERIMENT_NAME, artifact_location=ARTIFACT_LOCATION)
-except mlflow.exceptions.MlflowException:
-    experiment_id = mlflow.get_experiment_by_name(EXPERIMENT_NAME).experiment_id
-
-
-with mlflow.start_run(experiment_id=experiment_id, run_name="Model_Selection_Run") as parent_run:
+with mlflow.start_run(run_name="Model_Selection_Run") as parent_run:
     for model_name, model in models.items():
         with mlflow.start_run(run_name=model_name, nested=True) as child_run:
             print(f"--- Training and Evaluating: {model_name} ---")
@@ -94,6 +86,7 @@ with mlflow.start_run(experiment_id=experiment_id, run_name="Model_Selection_Run
             mlflow.log_metric("nsfw_f1_score", nsfw_f1)
             
             wrapped_model = ClassifierWrapper(model=model, vectorizer=vectorizer)
+            # Register the model with a unique name in the MLflow Model Registry
             mlflow.pyfunc.log_model(
                 artifact_path="model", 
                 python_model=wrapped_model,

@@ -1,4 +1,4 @@
-name: Build and Push Production Docker Image
+name: Build, Train, and Deploy Classifier
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-and-push:
+  build-and-train:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -33,6 +33,12 @@ jobs:
 
       - name: Train and evaluate models
         run: python src/train.py
+
+      # --- NEW VERIFICATION STEP ---
+      # This will print a list of all files in the mlruns directory to the Action log.
+      # This proves that our models and vectorizer were created successfully before the Docker build.
+      - name: Verify contents of mlruns directory
+        run: ls -R mlruns
 
       - name: Convert owner to lowercase
         id: lower_owner

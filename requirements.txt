@@ -1,13 +1,7 @@
-# Core Libraries
-fastapi
-uvicorn
 pandas
-python-dotenv
 praw
-mlflow
-boto3
-
-# Machine Learning Libraries
+python-dotenv
 scikit-learn
 lightgbm
 joblib
+streamlit

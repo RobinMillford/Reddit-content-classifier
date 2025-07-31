@@ -8,10 +8,10 @@ load_dotenv()
 
 # --- Configuration ---
 # You can adjust these numbers. A larger number means a better dataset, but it will take longer to run.
-POSTS_PER_SFW_SUB = 100
-POSTS_PER_NSFW_SUB = 150 
+POSTS_PER_SFW_SUB = 200
+POSTS_PER_NSFW_SUB = 250 
 # How many posts to scan from mixed subreddits to find SFW/NSFW content
-POSTS_TO_SCAN_PER_MIXED_SUB = 200
+POSTS_TO_SCAN_PER_MIXED_SUB = 300
 
 # --- Get Credentials ---
 client_id = os.getenv("REDDIT_CLIENT_ID")

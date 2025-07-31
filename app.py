@@ -1,6 +1,8 @@
 import streamlit as st
 from joblib import load
 import pandas as pd
+from sklearn.neural_network import MLPClassifier
+from sklearn.ensemble import VotingClassifier
 
 # --- Page Configuration ---
 st.set_page_config(
@@ -10,39 +12,16 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-# --- Custom CSS for the "Cyber-Glow" Theme ---
+# --- Custom CSS for Styling ---
 st.markdown("""
 <style>
-    /* Main background and font */
     .stApp {
         background-color: #0d0c22;
         background-image: 
             radial-gradient(circle at 1px 1px, rgba(255,255,255,0.05) 1px, transparent 0);
         background-size: 25px 25px;
-        color: #e5e7eb;
     }
-
-    /* --- Header --- */
-    /* This targets the main title element */
-    .st-emotion-cache-10trblm {
-        padding-bottom: 1rem;
-    }
-
-    /* --- Main Card Elements --- */
-    /* Style for the text area */
-    .stTextArea textarea {
-        background-color: rgba(23, 22, 49, 0.6);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 0.75rem;
-        color: #e5e7eb;
-        transition: box-shadow 0.3s ease;
-        box-shadow: 0 0 20px rgba(192, 38, 211, 0.1);
-    }
-    .stTextArea textarea:focus {
-        box-shadow: 0 0 25px rgba(59, 130, 246, 0.5);
-    }
-
-    /* Style for the button */
+    .st-emotion-cache-10trblm { color: #e5e7eb; }
     .stButton>button {
         background: linear-gradient(90deg, #d53a9d 0%, #7c3aed 100%);
         color: white;
@@ -57,9 +36,11 @@ st.markdown("""
         transform: translateY(-2px);
         box-shadow: 0 0 30px rgba(192, 38, 211, 0.7);
     }
-
-    /* --- Result Cards --- */
-    /* Base style for both success and error boxes */
+    .stTextArea textarea {
+        background-color: rgba(17, 24, 39, 0.8);
+        border: 1px solid #4b5563;
+        color: #e5e7eb;
+    }
     .stAlert {
         background: rgba(23, 22, 49, 0.6);
         backdrop-filter: blur(12px);
@@ -67,21 +48,16 @@ st.markdown("""
         border: 1px solid rgba(255, 255, 255, 0.1) !important;
         color: #e5e7eb !important;
     }
-    
-    /* SFW Result Box (Success) */
     .stAlert[data-baseweb="notification"][data-kind="success"] {
-        border-left: 6px solid #22d3ee !important; /* cyan-400 */
+        border-left: 6px solid #22d3ee !important;
         box-shadow: 0 0 30px rgba(6, 182, 212, 0.3);
     }
-    
-    /* NSFW Result Box (Error) */
     .stAlert[data-baseweb="notification"][data-kind="error"] {
-        border-left: 6px solid #d946ef !important; /* fuchsia-500 */
+        border-left: 6px solid #d946ef !important;
         box-shadow: 0 0 30px rgba(217, 70, 239, 0.3);
     }
 </style>
 """, unsafe_allow_html=True)
-
 
 # --- Caching the Model Loading ---
 @st.cache_resource
@@ -117,8 +93,20 @@ with col1:
     if st.button("Classify Content", use_container_width=True):
         if model and vectorizer and input_text:
             with st.spinner("Analyzing..."):
-                input_df = pd.DataFrame([input_text])
-                prediction = model.predict(input_df)
+                # First, vectorize the raw text
+                vectorized_text = vectorizer.transform([input_text])
+                
+                # *** THIS IS THE KEY FIX ***
+                # Check if the loaded model is an MLPClassifier or an ensemble that might contain one.
+                # If so, convert the data to the dense format it requires.
+                is_mlp_or_ensemble = isinstance(model, (MLPClassifier, VotingClassifier))
+                
+                if is_mlp_or_ensemble:
+                    prediction_input = vectorized_text.toarray()
+                else:
+                    prediction_input = vectorized_text
+
+                prediction = model.predict(prediction_input)
                 
                 if prediction[0] == 1: # NSFW
                     st.error("**Result: NSFW Content**", icon="🚨")
@@ -135,6 +123,6 @@ with col2:
     This application is a complete end-to-end MLOps project that demonstrates a full CI/CD pipeline.
     
     - **Automated Training:** A weekly GitHub Action automatically fetches the latest data from Reddit and retrains multiple classification models.
-    - **Model Selection:** The best-performing model is automatically selected based on its F1-score and saved as the new production model.
-    - **CI/CD:** Pushing the new model to the `main` branch of the GitHub repository automatically triggers a re-deployment of this Streamlit application.
+    - **Model Selection:** The best-performing model (including an ensemble) is automatically selected and saved.
+    - **CI/CD:** Pushing the new model to the `main` branch of the GitHub repository automatically triggers a re-deployment of this Streamlit app.
     """)

@@ -5,6 +5,7 @@ pandas
 python-dotenv
 praw
 mlflow
+boto3
 
 # Machine Learning Libraries
 scikit-learn

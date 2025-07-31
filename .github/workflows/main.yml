@@ -31,14 +31,13 @@ jobs:
           REDDIT_CLIENT_SECRET: ${{ secrets.REDDIT_CLIENT_SECRET }}
           REDDIT_USER_AGENT: ${{ secrets.REDDIT_USER_AGENT }}
 
-      - name: Train and evaluate models
+      - name: Train and Register Models to R2
         run: python src/train.py
-
-      # --- NEW VERIFICATION STEP ---
-      # This will print a list of all files in the mlruns directory to the Action log.
-      # This proves that our models and vectorizer were created successfully before the Docker build.
-      - name: Verify contents of mlruns directory
-        run: ls -R mlruns
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          MLFLOW_S3_ENDPOINT_URL: ${{ secrets.MLFLOW_S3_ENDPOINT_URL }}
+          BUCKET_NAME: ${{ secrets.BUCKET_NAME }}
 
       - name: Convert owner to lowercase
         id: lower_owner
@@ -51,7 +50,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push Docker image
+      - name: Build and push lightweight Docker image
         uses: docker/build-push-action@v5
         with:
           context: .

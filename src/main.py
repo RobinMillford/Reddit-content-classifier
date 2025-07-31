@@ -2,6 +2,13 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import mlflow
 import pandas as pd
+import os
+
+# --- Configure MLflow to use Cloudflare R2 as a remote artifact store ---
+# These environment variables will be provided by Render's secret management.
+os.environ["MLFLOW_S3_ENDPOINT_URL"] = os.getenv("MLFLOW_S3_ENDPOINT_URL")
+os.environ["AWS_ACCESS_KEY_ID"] = os.getenv("AWS_ACCESS_KEY_ID")
+os.environ["AWS_SECRET_ACCESS_KEY"] = os.getenv("AWS_SECRET_ACCESS_KEY")
 
 app = FastAPI()
 
@@ -15,41 +22,39 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# --- Dynamic Model Loading from MLflow ---
+# --- Model Loading ---
 model = None
-model_name = "None" # Default value
+model_name = "None"
+model_stage = "None"
 
 print("--- Initializing Production Model Loader ---")
 try:
-    # FINAL ROBUST LOGIC: Using the most compatible filter string.
-    # This correctly identifies only the child model runs.
+    # Find the best performing model from all runs in our experiment
     all_runs = mlflow.search_runs(
-        experiment_ids="0", 
-        filter_string="params.model_type != ''", # This is the correct, compatible filter
-        order_by=["metrics.nsfw_f1_score DESC"]
+        experiment_names=["RedditContentClassifier"], 
+        filter_string="params.model_type IS NOT NULL",
+        order_by=["metrics.nsfw_f1_score DESC"],
+        max_results=1
     )
 
     if all_runs.empty:
-        raise Exception("No valid model runs found. Please ensure the training script has run successfully.")
+        raise Exception("No model runs found in the remote artifact store.")
 
     best_run = all_runs.iloc[0]
-    best_run_id = best_run.run_id
     model_name = best_run["params.model_type"]
+    registered_model_name = f"prod-{model_name}-classifier"
 
-    print(f"✅ Found best model: '{model_name}' from run_id: {best_run_id}")
-    print(f"   NSFW F1-Score: {best_run['metrics.nsfw_f1_score']:.4f}")
+    print(f"✅ Found best model: '{model_name}' with F1-Score: {best_run['metrics.nsfw_f1_score']:.4f}")
 
-    # Load the Champion Model. The vectorizer is now packaged inside it.
-    model_artifact_path = f"{model_name}-classifier"
-    model_uri = f"runs:/{best_run_id}/{model_artifact_path}"
-    
-    print(f"   Loading model and vectorizer from URI: {model_uri}")
+    # Load the champion model directly from the model registry using its name.
+    # MLflow will handle downloading it from your R2 bucket.
+    model_uri = f"models:/{registered_model_name}/latest"
+    print(f"   Loading model from URI: {model_uri}")
     model = mlflow.pyfunc.load_model(model_uri)
     print("✅ Champion model loaded and ready to serve.")
 
 except Exception as e:
     print(f"❌ Error during model loading: {e}")
-    print("   Please ensure you have run the training script ('python src/train.py') successfully.")
 
 # --- Define Prediction Endpoint ---
 @app.post("/predict")
@@ -62,10 +67,8 @@ def predict(data: dict):
         return {"error": "Input text cannot be empty."}
     
     try:
-        # The input must be a pandas DataFrame for the custom model wrapper
         input_df = pd.DataFrame([text])
         prediction = model.predict(input_df)
-        
         classification = "NSFW" if prediction[0] == 1 else "SFW"
         is_anomaly = bool(classification == "NSFW")
 

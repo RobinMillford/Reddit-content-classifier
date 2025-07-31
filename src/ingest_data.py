@@ -8,7 +8,7 @@ load_dotenv()
 
 # --- Configuration ---
 POSTS_PER_SFW_SUB = 200
-POSTS_PER_NSFW_SUB = 250 
+POSTS_PER_NSFW_SUB = 300 
 POSTS_TO_SCAN_PER_MIXED_SUB = 300
 
 # --- Get Credentials ---

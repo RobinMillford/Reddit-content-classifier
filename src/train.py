@@ -22,7 +22,7 @@ df['label'] = df['classification'].apply(lambda label: 1 if label == 'NSFW' else
 
 # --- Preprocessing & Feature Engineering ---
 print("Vectorizing text data...")
-vectorizer = TfidfVectorizer(max_features=10000, stop_words='english', ngram_range=(1, 2)) 
+vectorizer = TfidfVectorizer(max_features=5000, stop_words='english', ngram_range=(1, 2)) 
 X = vectorizer.fit_transform(df['text'])
 y = df['label']
 

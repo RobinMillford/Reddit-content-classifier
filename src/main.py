@@ -12,11 +12,9 @@ os.environ["AWS_SECRET_ACCESS_KEY"] = os.getenv("AWS_SECRET_ACCESS_KEY")
 
 BUCKET_NAME = os.getenv("BUCKET_NAME")
 if not BUCKET_NAME:
-    # Set a default for local testing if the env var isn't present
-    print("WARNING: BUCKET_NAME environment variable not set.")
+    print("WARNING: BUCKET_NAME environment variable not set. Model loading will fail.")
 else:
-    # *** THIS IS THE CRUCIAL FIX ***
-    # We tell MLflow to use the R2 bucket as its backend for finding experiments and models.
+    # This is the crucial step that tells MLflow where to find the experiment data.
     mlflow.set_tracking_uri(f"s3://{BUCKET_NAME}")
 
 app = FastAPI()
@@ -34,7 +32,6 @@ app.add_middleware(
 # --- Model Loading ---
 model = None
 model_name = "None"
-model_stage = "None"
 
 print("--- Initializing Production Model Loader ---")
 try:
@@ -75,8 +72,10 @@ def predict(data: dict):
         return {"error": "Input text cannot be empty."}
     
     try:
+        # The input must be a pandas DataFrame for our custom model wrapper
         input_df = pd.DataFrame([text])
         prediction = model.predict(input_df)
+        
         classification = "NSFW" if prediction[0] == 1 else "SFW"
         is_anomaly = bool(classification == "NSFW")
 

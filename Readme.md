@@ -95,7 +95,7 @@ The result is a live application that is automatically kept up-to-date with the 
 
 1.  **Clone the repository:**
     ```bash
-    git clone [https://github.com/RobinMillford/Reddit-content-classifier.git](https://github.com/RobinMillford/Reddit-content-classifier.git)
+    git clone https://github.com/RobinMillford/Reddit-content-classifier.git
     cd Reddit-content-classifier
     ```
 

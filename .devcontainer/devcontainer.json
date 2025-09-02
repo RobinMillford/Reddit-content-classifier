@@ -1,0 +1,87 @@
+{
+    "name": "Reddit Content Classifier - Multi-Label ML Pipeline",
+    "image": "mcr.microsoft.com/devcontainers/python:3.11-bookworm",
+    
+    "customizations": {
+        "codespaces": {
+            "openFiles": [
+                "README.md",
+                "app.py",
+                "src/train.py",
+                "src/ingest_data.py"
+            ]
+        },
+        "vscode": {
+            "settings": {
+                "python.defaultInterpreterPath": "/usr/local/bin/python",
+                "python.analysis.typeCheckingMode": "basic",
+                "python.linting.enabled": true,
+                "python.linting.pylintEnabled": true,
+                "python.formatting.provider": "black",
+                "python.testing.pytestEnabled": true,
+                "files.associations": {
+                    "*.pkl": "binary",
+                    "*.joblib": "binary"
+                }
+            },
+            "extensions": [
+                "ms-python.python",
+                "ms-python.vscode-pylance",
+                "ms-python.black-formatter",
+                "ms-toolsai.jupyter",
+                "streetsidesoftware.code-spell-checker",
+                "esbenp.prettier-vscode",
+                "ms-vscode.vscode-json",
+                "github.vscode-github-actions",
+                "redhat.vscode-yaml"
+            ]
+        }
+    },
+    
+    // Port forwarding for Streamlit
+    "forwardPorts": [8501],
+    
+    // Development environment setup
+    "postCreateCommand": "bash .devcontainer/setup.sh",
+    
+    "portsAttributes": {
+        "8501": {
+            "label": "Streamlit App",
+            "onAutoForward": "openPreview"
+        }
+    },
+    
+    // Ensure non-root user (vscode) is used for better security
+    "remoteUser": "vscode",
+    
+    // Enhanced features for ML development
+    "features": {
+        "ghcr.io/devcontainers/features/git:1": {
+            "ppa": true,
+            "version": "latest"
+        },
+        "ghcr.io/devcontainers/features/git-lfs:1": {
+            "autoPull": true,
+            "version": "latest"
+        },
+        "ghcr.io/devcontainers/features/github-cli:1": {
+            "installDirectlyFromGitHubRelease": true,
+            "version": "latest"
+        }
+    },
+    
+    // Environment variables for development
+    "containerEnv": {
+        "PYTHONPATH": "/workspaces/Reddit-content-classifier",
+        "STREAMLIT_SERVER_PORT": "8501",
+        "STREAMLIT_SERVER_ADDRESS": "0.0.0.0"
+    },
+    
+    // Lifecycle scripts
+    "postStartCommand": "git lfs install && git config --global init.defaultBranch main",
+    
+    // Mount points for better performance
+    "mounts": [
+        "source=reddit-classifier-node-modules,target=${containerWorkspaceFolder}/node_modules,type=volume"
+    ]
+}

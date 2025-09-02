@@ -1,0 +1,12 @@
+pandas
+praw
+python-dotenv
+scikit-learn
+lightgbm
+joblib
+streamlit
+scikit-multilearn
+numpy
+matplotlib
+seaborn
+plotly

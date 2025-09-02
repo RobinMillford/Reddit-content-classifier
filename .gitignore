@@ -1,0 +1,65 @@
+# Environment variables
+.env
+
+# Python virtual environment
+myenv/
+venv/
+.venv/
+env/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Local data - Generated fresh in the MLOps pipeline
+data/raw_posts.csv
+data/*.csv
+data/*.json
+
+# Streamlit configuration
+.streamlit/
+
+# Test files and debug scripts (cleanup)
+test_*.py
+debug_*.py
+validate_*.py
+run_all_tests.py
+launch_app.py
+
+# Documentation files (optional cleanup)
+TESTING_GUIDE.md
+MULTI_LABEL_*.md
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# pytest cache
+.pytest_cache/
+.coverage
+
+# Development environment files
+DEV_QUICK_START.md
+logs/
+temp/
+notebooks/
+
+# OS generated files
+.DS_Store?
+ehthumbs.db
+Icon?
+
+# Logs
+*.log
+logs/

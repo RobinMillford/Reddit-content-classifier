@@ -26,21 +26,49 @@ TOPIC_KEYWORDS = {
         # Core tech terms
         'tech', 'technology', 'software', 'hardware', 'computer', 'programming', 'app', 'application',
         'digital', 'internet', 'web', 'online', 'code', 'coding', 'development', 'developer',
-        # AI/ML
+        # AI/ML - Enhanced with LangChain, AI Agents, and AI community terms
         'ai', 'artificial intelligence', 'machine learning', 'ml', 'deep learning', 'neural network',
         'algorithm', 'data science', 'automation', 'robot', 'robotics', 'chatgpt', 'gpt', 'openai',
+        'langchain', 'ai agent', 'ai agents', 'autonomous agent', 'llm', 'large language model',
+        'natural language processing', 'nlp', 'computer vision', 'reinforcement learning',
+        'transformer', 'bert', 'gpt-3', 'gpt-4', 'claude', 'anthropic', 'hugging face',
+        'tensorflow', 'pytorch', 'keras', 'scikit-learn', 'pandas', 'numpy',
+        'prompt engineering', 'fine-tuning', 'model training', 'inference', 'embeddings',
+        'rag', 'retrieval augmented generation', 'vector database', 'semantic search',
+        'ai safety', 'alignment', 'agi', 'artificial general intelligence', 'superintelligence',
+        'machine reasoning', 'cognitive architecture', 'neural symbolic', 'multimodal ai',
+        'ai ethics', 'bias', 'fairness', 'explainable ai', 'interpretability',
+        'federated learning', 'transfer learning', 'few-shot learning', 'zero-shot learning',
+        'generative ai', 'diffusion models', 'stable diffusion', 'dall-e', 'midjourney',
+        'conversational ai', 'chatbot', 'virtual assistant', 'voice ai', 'speech recognition',
+        'sentiment analysis', 'text classification', 'named entity recognition', 'text generation',
+        'knowledge graph', 'ontology', 'semantic web', 'expert system', 'decision tree',
+        'ensemble learning', 'gradient boosting', 'random forest', 'svm', 'support vector machine',
+        'clustering', 'classification', 'regression', 'supervised learning', 'unsupervised learning',
+        'semi-supervised learning', 'self-supervised learning', 'active learning',
+        'data mining', 'big data', 'data pipeline', 'feature engineering', 'model deployment',
+        'mlops', 'devops', 'continuous integration', 'model monitoring', 'a/b testing',
         # Platforms and tools
         'github', 'stackoverflow', 'python', 'javascript', 'react', 'nodejs', 'docker', 'kubernetes',
         'aws', 'cloud', 'database', 'sql', 'api', 'framework', 'library', 'linux', 'windows', 'mac',
+        'azure', 'google cloud', 'gcp', 'serverless', 'microservices', 'containers',
+        'jupyter', 'colab', 'anaconda', 'pip', 'conda', 'virtual environment',
         # Gaming tech (overlaps with entertainment but tech-focused)
         'pc gaming', 'console', 'gpu', 'cpu', 'ram', 'motherboard', 'overclocking', 'fps', 'graphics card',
         'nvidia', 'amd', 'intel', 'steam', 'epic games', 'origin', 'battlenet', 'gaming pc', 'rig',
+        'ray tracing', 'dlss', 'fsr', 'vulkan', 'directx', 'opengl',
         # Mobile
         'android', 'ios', 'mobile', 'smartphone', 'tablet', 'iphone', 'samsung', 'google pixel',
+        'flutter', 'react native', 'swift', 'kotlin', 'xamarin',
         # Emerging tech
         'blockchain', 'cryptocurrency', 'crypto', 'bitcoin', 'ethereum', 'nft', 'metaverse', 'vr', 'ar',
-        'virtual reality', 'augmented reality', 'innovation', 'startup', 'cyber', 'cybersecurity', 
-        'hacking', 'privacy', 'data breach', 'security'
+        'virtual reality', 'augmented reality', 'mixed reality', 'innovation', 'startup', 'cyber', 'cybersecurity', 
+        'hacking', 'privacy', 'data breach', 'security', 'encryption', 'cryptography',
+        'quantum computing', 'quantum', 'iot', 'internet of things', 'edge computing',
+        '5g', '6g', 'wifi', 'bluetooth', 'nfc', 'rfid', 'sensors', 'embedded systems',
+        'autonomous vehicles', 'self-driving', 'tesla', 'waymo', 'lidar', 'computer vision',
+        'drone', 'uav', 'robotics', 'automation', 'industrial automation', 'smart home',
+        'smart city', 'digital twin', 'simulation', 'modeling', 'optimization'
     ],
     'politics': [
         # Elections and voting
@@ -678,7 +706,8 @@ SFW_SUBREDDITS = list(set([
     "RelationshipMemes", "kpop", "canada", "DigitalPainting", "oddlyspecific", "DiWHY", "maybemaybemaybe", "spacex", "ethereum", "TaylorSwift", "singularity", "Health", "MMA", 
     "relationships", "Genshin_Impact", "OutOfTheLoop", "indieheads", "gameofthrones", "StockMarket", "HealthyFood", "ArtPorn", "Meditation", "DunderMifflin", "recipes", "google", 
     "PewdiepieSubmissions", "HolUp", "homestead", "teslamotors", "JapanTravel", "OUTFITS", "MinecraftMemes", "Games", "UFOs", "GTA", "howto", "DestinyTheGame", "HistoryPorn", 
-    "PeopleFuckingDying", "fantasyfootball", "yoga", "cursedcomments", "GifRecipes", "MurderedByWords", "harrypotter", "zelda", "Marvel", "raspberry_pi", "Perfectfit"
+    "PeopleFuckingDying", "fantasyfootball", "yoga", "cursedcomments", "GifRecipes", "MurderedByWords", "harrypotter", "zelda", "Marvel", "raspberry_pi", "Perfectfit",
+    "LangChain", "AI_Agents", "ArtificialInteligence"
 ]))
 
 # Subreddits that are almost exclusively NSFW

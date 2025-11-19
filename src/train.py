@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import os
 import dagshub
+import dagshub.auth  # <--- NEW IMPORT
 import mlflow
 import mlflow.sklearn
 from dotenv import load_dotenv 
@@ -30,19 +31,25 @@ DAGSHUB_TOKEN = os.getenv("DAGSHUB_TOKEN")
 
 # Validate config
 if not DAGSHUB_OWNER or not DAGSHUB_REPO or not DAGSHUB_TOKEN:
-    raise ValueError("❌ Error: DAGSHUB_OWNER, DAGSHUB_REPO, or DAGSHUB_TOKEN missing in .env file.")
+    raise ValueError("❌ Error: DAGSHUB_OWNER, DAGSHUB_REPO, or DAGSHUB_TOKEN missing in .env file or Secrets.")
 
 print("--- Starting Model Training & Automatic Selection ---")
 
 try:
     print("🔌 Connecting to DagsHub...")
-    # Force authentication using environment variables
+    
+    # 1. Force DagsHub Client Authentication (The Fix for CI/CD)
+    dagshub.auth.add_app_token(DAGSHUB_TOKEN)
+
+    # 2. Force MLflow Authentication
     os.environ["MLFLOW_TRACKING_USERNAME"] = DAGSHUB_OWNER
     os.environ["MLFLOW_TRACKING_PASSWORD"] = DAGSHUB_TOKEN
     
+    # 3. Initialize DagsHub & MLflow
     dagshub.init(repo_owner=DAGSHUB_OWNER, repo_name=DAGSHUB_REPO, mlflow=True)
     mlflow.set_experiment(EXPERIMENT_NAME)
     print(f"✅ MLflow tracking set to: {mlflow.get_tracking_uri()}")
+
 except Exception as e:
     print(f"⚠️ Connection Warning: {e}")
 

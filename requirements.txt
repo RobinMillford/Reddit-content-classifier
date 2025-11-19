@@ -10,3 +10,5 @@ numpy
 matplotlib
 seaborn
 plotly
+mlflow==2.8.1
+dagshub

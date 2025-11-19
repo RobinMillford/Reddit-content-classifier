@@ -18,6 +18,7 @@ __pycache__/
 data/raw_posts.csv
 data/*.csv
 data/*.json
+data/
 
 # Streamlit configuration
 .streamlit/
@@ -63,3 +64,5 @@ Icon?
 # Logs
 *.log
 logs/
+
+mlruns/

@@ -5,21 +5,22 @@
 [![Streamlit](https://img.shields.io/badge/streamlit-1.28+-red.svg)](https://streamlit.io/)
 [![MLOps](https://img.shields.io/badge/MLOps-automated-green.svg)](https://github.com/RobinMillford/Reddit-content-classifier)
 
-A production-ready MLOps pipeline that automatically classifies Reddit content using advanced multi-label machine learning with enterprise-level automation and continuous learning.
+A production-ready MLOps pipeline that automatically classifies Reddit content using advanced multi-label machine learning with enterprise-level automation, experiment tracking, and continuous learning.
 
 🌐 **[Live Application](https://reddit-content-classifier.streamlit.app/)**
 
 ## 🎯 Project Overview
 
-- **Multi-Label Classification**: Simultaneous analysis across 5 dimensions (Safety, Toxicity, Sentiment, Topic, Engagement)
-- **Automated MLOps**: Weekly retraining with model selection and deployment
-- **Production Scaling**: Handles 25,000+ posts per training cycle
-- **Real-time Inference**: Sub-second response times with 88%+ accuracy
+- **Multi-Label Classification**: Simultaneous analysis across 5 dimensions (Safety, Toxicity, Sentiment, Topic, Engagement).
+- **Automated MLOps**: Weekly retraining with automated champion model selection.
+- **Experiment Tracking**: Full integration with **MLflow & DagsHub** to track metrics (F1-score, Accuracy) for every run.
+- **Production Scaling**: Handles 25,000+ posts per training cycle.
+- **Real-time Inference**: Sub-second response times using optimized `.joblib` model serialization.
 
 ## 📊 Multi-Label Classification
 
 | Category       | Description                | Classifications                      |
-| -------------- | -------------------------- | ------------------------------------ |
+| :------------- | :------------------------- | :----------------------------------- |
 | **Safety**     | Content safety assessment  | Safe, NSFW                           |
 | **Toxicity**   | Harmful content detection  | Non-toxic, Toxic                     |
 | **Sentiment**  | Emotional tone analysis    | Positive, Neutral, Negative          |
@@ -30,29 +31,30 @@ A production-ready MLOps pipeline that automatically classifies Reddit content u
 
 ![MLOps Pipeline Workflow](Workflow.png)
 
-```
-Reddit API → Data Pipeline → ML Training → Model Deployment → Web Application
-    │              │              │               │                │
- PRAW API       GitHub Actions   Ensemble ML      Git LFS        Streamlit
+```mermaid
+Reddit API → Data Pipeline → ML Training (5 Algorithms) → MLflow Tracking
+                                        ↓
+Streamlit ← Git LFS ← Automatic Champion Selection (Best Metric Wins)
 ```
 
 **MLOps Pipeline**:
 
-1. **Data Collection**: Weekly automated Reddit data ingestion (25,000+ posts)
-2. **Feature Engineering**: TF-IDF vectorization (10k features, 1-2 grams)
-3. **Model Training**: Multi-algorithm competition (Logistic Regression, SVM, Neural Networks, LightGBM)
-4. **Model Selection**: Ensemble creation from top-performing models
-5. **Deployment**: Automated Git LFS versioning and cloud deployment
+1.  **Data Collection**: Weekly automated Reddit data ingestion (25,000+ posts).
+2.  **Feature Engineering**: TF-IDF vectorization (10k features, 1-2 grams).
+3.  **Multi-Model Training**: Simulates 5 different algorithms (Logistic Regression, SVM, Naive Bayes, LightGBM, MLP) simultaneously.
+4.  **Experiment Tracking**: Logs all parameters and metrics to **DagsHub/MLflow**.
+5.  **Champion Selection**: Automatically compares F1-scores and selects the single best model for deployment.
+6.  **Deployment**: Automated Git LFS versioning and cloud deployment.
 
 ## 🎯 Performance Metrics
 
 | Metric                  | Value   | Description                        |
-| ----------------------- | ------- | ---------------------------------- |
+| :---------------------- | :------ | :--------------------------------- |
 | **Binary F1-Score**     | 88.3%   | SFW/NSFW classification accuracy   |
 | **Multi-Label Jaccard** | 82.7%   | Overall multi-category performance |
 | **Training Data**       | 25,000+ | Reddit posts per training cycle    |
-| **Inference Speed**     | <100ms  | Real-time response capability      |
-| **Model Size**          | ~150MB  | Optimized for cloud deployment     |
+| **Inference Speed**     | \<100ms | Real-time response capability      |
+| **Model Size**          | \~50MB  | Optimized `.joblib` compression    |
 | **Automation**          | Weekly  | Continuous learning and updates    |
 
 ## 🛠️ Technology Stack
@@ -65,8 +67,9 @@ Reddit API → Data Pipeline → ML Training → Model Deployment → Web Applic
 
 **MLOps & Infrastructure**:
 
+- **MLflow** (Experiment Tracking), **DagsHub** (Remote Storage)
 - **GitHub Actions** (CI/CD), **Git LFS** (Model Versioning)
-- **Docker** (Containerization), **Streamlit Cloud** (Deployment)
+- **Joblib** (Efficient Model Serialization)
 
 ## 🚀 Local Development Setup
 
@@ -74,7 +77,8 @@ Reddit API → Data Pipeline → ML Training → Model Deployment → Web Applic
 
 - **Python 3.11+**
 - **Git** with **Git LFS** support
-- **Reddit API credentials** (for data collection and training)
+- **Reddit API credentials** (for data collection)
+- **DagsHub Account** (for experiment tracking)
 
 ### Step 1: Clone Repository
 
@@ -91,68 +95,33 @@ git lfs pull
 
 ```bash
 # Create virtual environment
-python -m venv venv
+python -m venv myenv
 
 # Activate virtual environment
 # Windows:
-venv\Scripts\activate
+myenv\Scripts\activate
 # macOS/Linux:
-source venv/bin/activate
+source myenv/bin/activate
 
 # Install dependencies
 pip install -r requirements.txt
 ```
 
-### Step 3: Reddit API Configuration
+### Step 3: Configuration
 
-**Get Reddit API Credentials**:
-
-1. Go to [Reddit App Preferences](https://www.reddit.com/prefs/apps)
-2. Click **"Create App"** or **"Create Another App"**
-3. Fill in the form:
-   - **Name**: Your app name (e.g., "Content Classifier")
-   - **App type**: Select **"script"**
-   - **Description**: Optional
-   - **About URL**: Leave blank
-   - **Redirect URI**: `http://localhost:8080`
-4. Click **"Create app"**
-5. Note down the **Client ID** (under app name) and **Client Secret**
-
-**Setup Environment Variables**:
-
-Create a `.env` file in the project root:
-
-```bash
-# Create .env file
-touch .env  # Linux/macOS
-# or create manually on Windows
-```
-
-Add your Reddit API credentials to `.env`:
+Create a `.env` file in the project root. You need **both** Reddit API keys (for data) and DagsHub keys (for tracking).
 
 ```env
-REDDIT_CLIENT_ID=your_client_id_here
-REDDIT_CLIENT_SECRET=your_client_secret_here
+# Reddit API (Data Collection)
+REDDIT_CLIENT_ID=your_reddit_client_id
+REDDIT_CLIENT_SECRET=your_reddit_secret
 REDDIT_USER_AGENT=YourAppName/1.0
-```
 
-**Alternative: Export Environment Variables**:
-
-```bash
-# Export variables (Linux/macOS)
-export REDDIT_CLIENT_ID="your_client_id"
-export REDDIT_CLIENT_SECRET="your_client_secret"
-export REDDIT_USER_AGENT="YourAppName/1.0"
-
-# Windows Command Prompt
-set REDDIT_CLIENT_ID=your_client_id
-set REDDIT_CLIENT_SECRET=your_client_secret
-set REDDIT_USER_AGENT=YourAppName/1.0
-
-# Windows PowerShell
-$env:REDDIT_CLIENT_ID="your_client_id"
-$env:REDDIT_CLIENT_SECRET="your_client_secret"
-$env:REDDIT_USER_AGENT="YourAppName/1.0"
+# DagsHub/MLflow (Experiment Tracking)
+DAGSHUB_OWNER=your_dagshub_username
+DAGSHUB_REPO=your_dagshub_repo_name
+DAGSHUB_TOKEN=your_dagshub_token_here
+EXPERIMENT_NAME=your_experiment_name_here
 ```
 
 ### Step 4: Run Application
@@ -166,57 +135,35 @@ streamlit run app.py
 
 ### Step 5: Custom Model Training (Optional)
 
+To run the pipeline manually and trigger the **Automatic Champion Selection**:
+
 ```bash
-# Collect fresh training data
+# 1. Collect fresh training data
 python src/ingest_data.py
 
-# Train and evaluate models
+# 2. Train 10 models, log to DagsHub, and save the best one locally
 python src/train.py
-
-# Models are automatically saved and can be loaded by app.py
-```
-
-### Troubleshooting
-
-**Common Issues**:
-
-1. **Git LFS files not downloading**: Run `git lfs pull`
-2. **Reddit API errors**: Verify your `.env` credentials
-3. **Model files missing**: Ensure Git LFS is installed and configured
-4. **Import errors**: Check virtual environment activation
-
-**Verify Setup**:
-
-```bash
-# Check Git LFS status
-git lfs ls-files
-
-# Verify environment variables
-python -c "import os; print(os.getenv('REDDIT_CLIENT_ID'))"
-
-# Test Reddit API connection
-python -c "import praw; reddit = praw.Reddit(client_id='test', client_secret='test', user_agent='test'); print('PRAW imported successfully')"
 ```
 
 ## 📁 Project Structure
 
 ```
 ├── src/
-│   ├── ingest_data.py      # Reddit data collection
-│   └── train.py            # ML model training
-├── .github/workflows/      # CI/CD automation
-├── app.py                  # Streamlit web application
-├── champion_model.pkl      # Production binary model (Git LFS)
-├── multi_label_model.pkl   # Production multi-label model (Git LFS)
-├── vectorizer.joblib       # Text preprocessing pipeline (Git LFS)
-└── model_metadata.joblib   # Model performance metrics (Git LFS)
+│   ├── ingest_data.py           # Reddit data collection script
+│   └── train.py                 # ML training & Auto-selection logic
+├── .github/workflows/           # CI/CD automation
+├── app.py                       # Streamlit web application
+├── best_binary_model.joblib     # The Champion Binary Model (Git LFS)
+├── best_multi_model.joblib      # The Champion Multi-Label Model (Git LFS)
+├── tfidf_vectorizer.joblib      # Text preprocessing pipeline (Git LFS)
+└── model_metadata.joblib        # Model labels & encoders (Git LFS)
 ```
 
 ## 💼 Professional Impact
 
-**Business Value**: Demonstrates end-to-end ML engineering capabilities with production-ready automation and scalable infrastructure design.
+**Business Value**: Demonstrates end-to-end ML engineering capabilities with production-ready automation, remote experiment tracking, and scalable infrastructure design.
 
-**Technical Expertise**: Showcases expertise in MLOps, automated pipelines, multi-label classification, and cloud deployment strategies.
+**Technical Expertise**: Showcases expertise in MLOps, MLflow integration, automated pipelines, multi-label classification, and cloud deployment strategies.
 
 **Results Delivered**: 88%+ accuracy system processing 25,000+ posts weekly with zero-downtime continuous deployment.
 
@@ -226,26 +173,10 @@ This project is **open source** and welcomes contributions from the community.
 
 **How to Contribute**:
 
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/enhancement`
-3. Make your changes with proper testing
-4. Submit a pull request with detailed description
-
-**Areas for Contribution**:
-
-- Model performance improvements
-- New classification categories
-- Enhanced MLOps automation
-- Documentation and testing
-
-**Development Setup**:
-
-```bash
-git clone https://github.com/RobinMillford/Reddit-content-classifier.git
-cd Reddit-content-classifier
-pip install -r requirements.txt
-streamlit run app.py
-```
+1.  Fork the repository
+2.  Create a feature branch: `git checkout -b feature/enhancement`
+3.  Make your changes with proper testing
+4.  Submit a pull request with detailed description
 
 **Project Repository**: [github.com/RobinMillford/Reddit-content-classifier](https://github.com/RobinMillford/Reddit-content-classifier)
 

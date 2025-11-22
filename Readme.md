@@ -31,11 +31,6 @@ A production-ready MLOps pipeline that automatically classifies Reddit content u
 
 ![MLOps Pipeline Workflow](Workflow.png)
 
-```mermaid
-Reddit API → Data Pipeline → ML Training (5 Algorithms) → MLflow Tracking
-                                        ↓
-Streamlit ← Git LFS ← Automatic Champion Selection (Best Metric Wins)
-```
 
 **MLOps Pipeline**:
 
